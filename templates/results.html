@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - Meta Ad Library Scraper{% endblock %}
+
+{% block extra_css %}
+<style>
+    .results-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border-radius: 10px;
+        color: white;
+    }
+    
+    .ad-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .ad-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .ad-header {
+        background: #f8fafc;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .advertiser-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0;
+    }
+    
+    .ad-date {
+        font-size: 0.9rem;
+        color: #718096;
+        margin: 0;
+    }
+    
+    .ad-body {
+        padding: 1.5rem;
+    }
+    
+    .ad-headline {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 1rem;
+        line-height: 1.4;
+    }
+    
+    .ad-text {
+        color: #4a5568;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+    
+    .ad-media {
+        max-width: 100%;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 3rem;
+        color: #718096;
+    }
+    
+    .back-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 25px;
+        color: white;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-block;
+        margin-bottom: 2rem;
+    }
+    
+    .back-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .stats-badge {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        margin-left: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="/" class="back-btn">
+    <i class="fas fa-arrow-left me-2"></i>Back to Search
+</a>
+
+<div class="results-header">
+    <h2><i class="fas fa-search me-2"></i>Search Results for "{{ keyword }}"</h2>
+    <span class="stats-badge">{{ ads|length }} ads found</span>
+</div>
+
+{% if ads %}
+    <div class="row">
+        {% for ad in ads %}
+        <div class="col-lg-6 col-xl-4">
+            <div class="ad-card">
+                <div class="ad-header">
+                    <h5 class="advertiser-name">{{ ad.advertiser_name }}</h5>
+                    <p class="ad-date">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        Started: {{ ad.start_date }}
+                    </p>
+                </div>
+                <div class="ad-body">
+                    <h4 class="ad-headline">{{ ad.headline }}</h4>
+                    <p class="ad-text">{{ ad.text }}</p>
+                    
+                    {% if ad.media_url %}
+                    <img src="{{ ad.media_url }}" 
+                         alt="Ad Media" 
+                         class="ad-media"
+                         onerror="this.style.display='none'">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h5><i class="fas fa-info-circle me-2"></i>Results Information</h5>
+                <p class="mb-0">
+                    Showing top {{ ads|length }} active ads for "<strong>{{ keyword }}</strong>". 
+                    Results are scraped in real-time from Meta's public Ad Library.
+                </p>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="no-results">
+        <i class="fas fa-search fa-3x mb-3" style="color: #cbd5e0;"></i>
+        <h3>No ads found</h3>
+        <p>No active ads were found for the keyword "{{ keyword }}". Try a different search term.</p>
+        <a href="/" class="btn btn-primary mt-3">Try Another Search</a>
+    </div>
+{% endif %}
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-secondary">
+            <h6><i class="fas fa-code me-2"></i>API Access</h6>
+            <p class="mb-0">
+                You can also access this data programmatically using our REST API:
+                <br>
+                <code>POST /api/search</code> with JSON payload: <code>{"keyword": "{{ keyword }}"}</code>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add some animation when cards load
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.ad-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+    
+    // Handle image load errors gracefully
+    document.querySelectorAll('.ad-media').forEach(img => {
+        img.addEventListener('error', function() {
+            this.style.display = 'none';
+        });
+    });
+</script>
+{% endblock %}

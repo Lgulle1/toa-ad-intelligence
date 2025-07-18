@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Search Ads - Meta Ad Library Scraper{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <form method="POST" action="/search" class="mb-4">
+        <div class="input-group">
+            <input type="text" 
+                   class="form-control search-input" 
+                   name="keyword" 
+                   placeholder="Enter search keyword (e.g., 'orthopedic', 'knee surgery')" 
+                   required 
+                   autocomplete="off">
+            <button class="btn search-btn" type="submit">
+                <i class="fas fa-search me-2"></i>Search Ads
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="feature-list">
+            <h4><i class="fas fa-list-ul me-2"></i>What We Extract</h4>
+            <ul>
+                <li><strong>Advertiser Name</strong> - Company or page name</li>
+                <li><strong>Ad Headlines</strong> - Main ad titles</li>
+                <li><strong>Ad Text</strong> - Full ad description</li>
+                <li><strong>Media URLs</strong> - Images and videos</li>
+                <li><strong>Start Date</strong> - When the ad started running</li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="feature-list">
+            <h4><i class="fas fa-cogs me-2"></i>Features</h4>
+            <ul>
+                <li>Real-time scraping of active ads</li>
+                <li>Top 10 most relevant results</li>
+                <li>Responsive web interface</li>
+                <li>REST API for programmatic access</li>
+                <li>Extensible for other ad platforms</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="feature-list">
+            <h4><i class="fas fa-info-circle me-2"></i>How to Use</h4>
+            <ol>
+                <li>Enter a keyword related to the ads you want to find</li>
+                <li>Click "Search Ads" to start scraping Meta's Ad Library</li>
+                <li>View the results with detailed ad information</li>
+                <li>Use the API endpoint <code>/api/search</code> for programmatic access</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h5><i class="fas fa-lightbulb me-2"></i>Example Keywords</h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <span class="badge bg-primary me-1">orthopedic</span>
+                </div>
+                <div class="col-md-3">
+                    <span class="badge bg-primary me-1">knee surgery</span>
+                </div>
+                <div class="col-md-3">
+                    <span class="badge bg-primary me-1">fitness</span>
+                </div>
+                <div class="col-md-3">
+                    <span class="badge bg-primary me-1">weight loss</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add some interactivity
+    document.querySelector('input[name="keyword"]').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            this.closest('form').submit();
+        }
+    });
+    
+    // Auto-focus on the search input
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelector('input[name="keyword"]').focus();
+    });
+</script>
+{% endblock %}
