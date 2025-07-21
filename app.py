@@ -1,20 +1,40 @@
 import logging
 import traceback
 
+# Set up comprehensive logging to catch ALL warnings
 class DebugLoggingHandler(logging.Handler):
     def emit(self, record):
         message = record.getMessage()
+        print(f"DEBUG: All logging - {record.levelname}: {message} (from {record.name})")
         if any(phrase in message.lower() for phrase in ["chrome browser check failed", "chrome", "browser check", "install chrome"]):
-            print(f"\n\n--- FOUND CHROME WARNING: {message} ---")
+            print(f"\n\n=== FOUND CHROME WARNING ===")
+            print(f"Message: {message}")
             print(f"Logger: {record.name}")
             print(f"Level: {record.levelname}")
             print(f"Module: {record.module}")
             print(f"Function: {record.funcName}")
             print(f"Line: {record.lineno}")
+            print("Stack trace:")
             traceback.print_stack()
-            print("--- END TRACE ---\n\n")
+            print("=== END CHROME WARNING ===\n\n")
 
-logging.getLogger().addHandler(DebugLoggingHandler())
+# Add handler to root logger and all possible loggers
+debug_handler = DebugLoggingHandler()
+debug_handler.setLevel(logging.DEBUG)
+
+logging.getLogger().addHandler(debug_handler)
+logging.getLogger("__main__").addHandler(debug_handler)
+logging.getLogger("app").addHandler(debug_handler)
+
+# Also override the warning function directly
+original_warning = logging.warning
+def patched_warning(msg, *args, **kwargs):
+    print(f"\n\n!!! DIRECT WARNING CALL: {msg} !!!")
+    traceback.print_stack()
+    print("!!! END DIRECT WARNING !!!\n\n")
+    return original_warning(msg, *args, **kwargs)
+
+logging.warning = patched_warning
 
 from flask import Flask, render_template, request, jsonify, flash
 from scraper import MetaAdScraper
