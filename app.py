@@ -2,20 +2,36 @@ from flask import Flask, render_template, request, jsonify, flash
 import logging
 import os
 from dotenv import load_dotenv
-
-# Suppress Chrome warnings by redirecting logging temporarily during import
 import sys
-from io import StringIO
+import warnings
 
-# Capture and filter any Chrome warnings during scraper import
-original_stderr = sys.stderr
-sys.stderr = StringIO()
+# AGGRESSIVE Chrome warning suppression
+class ChromeWarningFilter(logging.Filter):
+    def filter(self, record):
+        msg = record.getMessage()
+        if "chrome browser check failed" in msg.lower() or "install chrome" in msg.lower():
+            return False  # Block this message completely
+        return True
 
-try:
-    from scraper import MetaAdScraper
-finally:
-    # Restore stderr
-    sys.stderr = original_stderr
+# Apply the filter to all loggers, especially __main__
+root_logger = logging.getLogger()
+main_logger = logging.getLogger('__main__')
+app_logger = logging.getLogger('app')
+werkzeug_logger = logging.getLogger('werkzeug')
+
+# Apply filter to all possible loggers
+for logger in [root_logger, main_logger, app_logger, werkzeug_logger]:
+    logger.addFilter(ChromeWarningFilter())
+
+# Set main logger level to ERROR to suppress warnings
+main_logger.setLevel(logging.ERROR)
+
+# Also suppress warnings module
+warnings.filterwarnings("ignore", message=".*Chrome.*")
+warnings.filterwarnings("ignore", message=".*browser.*")
+
+# Import scraper only when needed to avoid early Chrome checks
+# from scraper import MetaAdScraper
 
 # Load environment variables
 load_dotenv()
@@ -43,6 +59,8 @@ def search():
     
     try:
         logger.info(f"Searching for keyword: {keyword}")
+        # Import scraper only when needed
+        from scraper import MetaAdScraper
         scraper = MetaAdScraper()
         ads = scraper.search_ads(keyword)
         
@@ -67,6 +85,8 @@ def api_search():
         return jsonify({'error': 'Keyword is required'}), 400
     
     try:
+        # Import scraper only when needed
+        from scraper import MetaAdScraper
         scraper = MetaAdScraper()
         ads = scraper.search_ads(keyword)
         ads = ads[:10]  # Limit to top 10
