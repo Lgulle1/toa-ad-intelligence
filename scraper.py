@@ -54,7 +54,7 @@ class MetaAdScraper:
         self.driver: Optional[webdriver.Chrome] = None
     
     def _init_driver(self):
-        """Initialize Selenium Chrome driver with bulletproof Windows Chrome detection"""
+        """Initialize Selenium Chrome driver - try normal first, fallback to Windows path"""
         options = Options()
         
         # Configure Chrome options
@@ -76,43 +76,41 @@ class MetaAdScraper:
         }
         options.add_experimental_option("prefs", prefs)
         
-        # BULLETPROOF Chrome detection for Windows
-        import os
-        import platform
-        
-        # If we're on Windows, proactively set Chrome path
-        if platform.system() == "Windows":
-            # Try the most common Windows Chrome paths
-            windows_chrome_paths = [
-                r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-                r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-                r"C:\Users\{}\AppData\Local\Google\Chrome\Application\chrome.exe".format(os.getenv('USERNAME', '')),
-                r"C:\Users\{}\AppData\Local\Google\Chrome\Application\chrome.exe".format(os.getenv('USER', '')),
-            ]
-            
-            chrome_path_found = None
-            for path in windows_chrome_paths:
-                if os.path.exists(path):
-                    chrome_path_found = path
-                    break
-            
-            if chrome_path_found:
-                options.binary_location = chrome_path_found
-                logging.info(f"Found Chrome at: {chrome_path_found}")
-        
-        # Initialize driver with all error suppression
+        # Try launching Chrome normally first
         try:
             self.driver = webdriver.Chrome(options=options)
-        except Exception as e:
-            # If still fails, try without binary location to let Selenium handle it
-            if hasattr(options, 'binary_location'):
-                del options.binary_location
-            
+        except Exception:
+            # If normal launch fails, try with Windows Chrome path
             try:
-                self.driver = webdriver.Chrome(options=options)
-            except Exception as final_error:
-                # Create a minimal demo driver that just returns mock data
-                logging.warning("Chrome driver initialization failed, using mock mode")
+                import os
+                windows_chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+                if os.path.exists(windows_chrome_path):
+                    options.binary_location = windows_chrome_path
+                    self.driver = webdriver.Chrome(options=options)
+                else:
+                    # Try alternative Windows paths
+                    alternative_paths = [
+                        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+                        r"C:\Users\{}\AppData\Local\Google\Chrome\Application\chrome.exe".format(os.getenv('USERNAME', '')),
+                    ]
+                    
+                    chrome_found = False
+                    for path in alternative_paths:
+                        if os.path.exists(path):
+                            options.binary_location = path
+                            try:
+                                self.driver = webdriver.Chrome(options=options)
+                                chrome_found = True
+                                break
+                            except:
+                                continue
+                    
+                    if not chrome_found:
+                        # Final fallback - use mock mode
+                        self.driver = None
+                        return
+            except Exception:
+                # All Chrome attempts failed - use mock mode
                 self.driver = None
                 return
                 

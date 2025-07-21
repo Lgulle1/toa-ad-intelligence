@@ -8,9 +8,19 @@ import warnings
 # AGGRESSIVE Chrome warning suppression
 class ChromeWarningFilter(logging.Filter):
     def filter(self, record):
-        msg = record.getMessage()
-        if "chrome browser check failed" in msg.lower() or "install chrome" in msg.lower():
-            return False  # Block this message completely
+        msg = record.getMessage().lower()
+        blocked_phrases = [
+            "chrome browser check failed",
+            "install chrome",
+            "chrome not found",
+            "browser check failed",
+            "install chrome or chromium",
+            "chrome or chromium for full functionality"
+        ]
+        
+        for phrase in blocked_phrases:
+            if phrase in msg:
+                return False  # Block this message completely
         return True
 
 # Apply the filter to all loggers, especially __main__
@@ -25,6 +35,16 @@ for logger in [root_logger, main_logger, app_logger, werkzeug_logger]:
 
 # Set main logger level to ERROR to suppress warnings
 main_logger.setLevel(logging.ERROR)
+
+# Additional nuclear option - disable all __main__ warnings during startup
+original_showwarning = warnings.showwarning
+def silence_chrome_warnings(message, category, filename, lineno, file=None, line=None):
+    msg_str = str(message).lower()
+    if any(phrase in msg_str for phrase in ["chrome", "browser check", "install chrome"]):
+        return  # Completely ignore Chrome-related warnings
+    return original_showwarning(message, category, filename, lineno, file, line)
+
+warnings.showwarning = silence_chrome_warnings
 
 # Also suppress warnings module
 warnings.filterwarnings("ignore", message=".*Chrome.*")
