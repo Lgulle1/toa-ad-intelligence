@@ -21,15 +21,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Check if Chrome/Chromium is available
-if command -v chromium-browser >/dev/null 2>&1; then
-    echo "✅ Chromium browser found"
-elif command -v google-chrome >/dev/null 2>&1; then
-    echo "✅ Chrome browser found"
-else
-    echo "⚠️  Warning: No browser found. Install Chrome or Chromium for full functionality."
-    echo "   sudo apt install chromium-browser"
-fi
+# Chrome path is manually configured in scraper.py
 
 echo ""
 echo "🌐 Starting Flask application..."
