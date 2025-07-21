@@ -1,40 +1,61 @@
+# IMMEDIATE DEBUG SETUP - MUST BE FIRST!
 import logging
 import traceback
+import sys
 
-# Set up comprehensive logging to catch ALL warnings
-class DebugLoggingHandler(logging.Handler):
+print("🔍 DEBUG: Starting app.py import...")
+
+# Set up the most aggressive debugging possible
+class UltraDebugHandler(logging.Handler):
     def emit(self, record):
         message = record.getMessage()
-        print(f"DEBUG: All logging - {record.levelname}: {message} (from {record.name})")
-        if any(phrase in message.lower() for phrase in ["chrome browser check failed", "chrome", "browser check", "install chrome"]):
-            print(f"\n\n=== FOUND CHROME WARNING ===")
-            print(f"Message: {message}")
-            print(f"Logger: {record.name}")
+        print(f"🐛 ULTRA DEBUG: {record.levelname} from {record.name}: {message}")
+        if "chrome" in message.lower() or "browser" in message.lower():
+            print(f"\n🎯 === CHROME/BROWSER WARNING DETECTED ===")
+            print(f"Full message: {message}")
+            print(f"Logger name: {record.name}")
             print(f"Level: {record.levelname}")
-            print(f"Module: {record.module}")
-            print(f"Function: {record.funcName}")
-            print(f"Line: {record.lineno}")
-            print("Stack trace:")
+            print(f"Module: {getattr(record, 'module', 'Unknown')}")
+            print(f"Function: {getattr(record, 'funcName', 'Unknown')}")
+            print(f"Line: {getattr(record, 'lineno', 'Unknown')}")
+            print(f"Pathname: {getattr(record, 'pathname', 'Unknown')}")
+            print("Complete stack trace:")
             traceback.print_stack()
-            print("=== END CHROME WARNING ===\n\n")
+            print("🎯 === END CHROME/BROWSER WARNING ===\n")
 
-# Add handler to root logger and all possible loggers
-debug_handler = DebugLoggingHandler()
-debug_handler.setLevel(logging.DEBUG)
+# Create and configure the ultra debug handler
+ultra_handler = UltraDebugHandler()
+ultra_handler.setLevel(logging.DEBUG)
 
-logging.getLogger().addHandler(debug_handler)
-logging.getLogger("__main__").addHandler(debug_handler)
-logging.getLogger("app").addHandler(debug_handler)
+# Add to ALL possible loggers
+root_logger = logging.getLogger()
+root_logger.addHandler(ultra_handler)
+root_logger.setLevel(logging.DEBUG)
 
-# Also override the warning function directly
+main_logger = logging.getLogger("__main__")
+main_logger.addHandler(ultra_handler)
+main_logger.setLevel(logging.DEBUG)
+
+# Patch ALL warning functions
+original_basicConfig = logging.basicConfig
 original_warning = logging.warning
-def patched_warning(msg, *args, **kwargs):
-    print(f"\n\n!!! DIRECT WARNING CALL: {msg} !!!")
+original_getLogger = logging.getLogger
+
+def debug_warning(msg, *args, **kwargs):
+    print(f"\n⚡ INTERCEPTED logging.warning(): {msg}")
     traceback.print_stack()
-    print("!!! END DIRECT WARNING !!!\n\n")
+    print("⚡ END INTERCEPTED WARNING\n")
     return original_warning(msg, *args, **kwargs)
 
-logging.warning = patched_warning
+def debug_getLogger(name=None):
+    logger = original_getLogger(name)
+    logger.addHandler(ultra_handler)
+    return logger
+
+logging.warning = debug_warning
+logging.getLogger = debug_getLogger
+
+print("🔍 DEBUG: Logging setup complete, importing other modules...")
 
 from flask import Flask, render_template, request, jsonify, flash
 from scraper import MetaAdScraper
