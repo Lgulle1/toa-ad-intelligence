@@ -26,60 +26,32 @@ class MetaAdScraper:
     
     def _init_driver(self):
         """Initialize Selenium Chrome driver"""
-        try:
-            options = Options()
-            options.binary_location = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-            options.add_argument('--headless')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-dev-shm-usage')
-            options.add_argument('--disable-blink-features=AutomationControlled')
-            options.add_argument('--disable-web-security')
-            options.add_argument('--allow-running-insecure-content')
-            options.add_argument('--disable-features=VizDisplayCompositor')
-            options.add_argument('--window-size=1920,1080')
-            options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
-            
-            # Disable images and CSS for faster loading
-            prefs = {
-                "profile.managed_default_content_settings.images": 2,
-                "profile.default_content_setting_values.notifications": 2,
-                "profile.managed_default_content_settings.stylesheets": 2
-            }
-            options.add_experimental_option("prefs", prefs)
-            
-            # Try to find Chrome or Chromium
-            try:
-                self.driver = webdriver.Chrome(options=options)
-            except Exception as e:
-                logger.warning(f"Chrome not found, trying with explicit path: {e}")
-                # Common Chrome paths
-                chrome_paths = [
-                    '/usr/bin/google-chrome',
-                    '/usr/bin/google-chrome-stable',
-                    '/usr/bin/chromium',
-                    '/usr/bin/chromium-browser'
-                ]
+        options = Options()
+        options.binary_location = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+        options.add_argument('--headless')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--disable-blink-features=AutomationControlled')
+        options.add_argument('--disable-web-security')
+        options.add_argument('--allow-running-insecure-content')
+        options.add_argument('--disable-features=VizDisplayCompositor')
+        options.add_argument('--window-size=1920,1080')
+        options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+        
+        # Disable images and CSS for faster loading
+        prefs = {
+            "profile.managed_default_content_settings.images": 2,
+            "profile.default_content_setting_values.notifications": 2,
+            "profile.managed_default_content_settings.stylesheets": 2
+        }
+        options.add_experimental_option("prefs", prefs)
+        
+        # Initialize Chrome driver with manually set binary path
+        self.driver = webdriver.Chrome(options=options)
                 
-                for chrome_path in chrome_paths:
-                    try:
-                        options.binary_location = chrome_path
-                        self.driver = webdriver.Chrome(options=options)
-                        break
-                    except:
-                        continue
-                
-                if not self.driver:
-                    raise Exception("Chrome browser not found")
-                    
-            # Set timeouts
-            self.driver.implicitly_wait(10)
-            self.driver.set_page_load_timeout(30)
-            
-            logger.info("Chrome driver initialized successfully")
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize Chrome driver: {e}")
-            raise
+        # Set timeouts
+        self.driver.implicitly_wait(10)
+        self.driver.set_page_load_timeout(30)
     
     def _close_driver(self):
         """Clean up driver resources"""
