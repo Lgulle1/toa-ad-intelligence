@@ -77,16 +77,4 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 if __name__ == '__main__':
-    # Check if Chrome is available
-    import subprocess
-    try:
-        result = subprocess.run(['google-chrome', '--version'], 
-                              capture_output=True, text=True, timeout=5)
-        if result.returncode == 0:
-            logger.info(f"Chrome found: {result.stdout.strip()}")
-        else:
-            logger.warning("Chrome not found at 'google-chrome'. Will try other paths.")
-    except:
-        logger.warning("Chrome browser check failed. Install Chrome or Chromium for full functionality.")
-    
     app.run(debug=True, host='0.0.0.0', port=5000)
