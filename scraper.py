@@ -1,5 +1,16 @@
-import time
 import logging
+import traceback
+
+class DebugLoggingHandler(logging.Handler):
+    def emit(self, record):
+        if "Chrome browser check failed" in record.getMessage():
+            print("\n\n--- LOGGING STACK TRACE ---")
+            traceback.print_stack()
+            print("--- END TRACE ---\n\n")
+
+logging.getLogger().addHandler(DebugLoggingHandler())
+
+import time
 from datetime import datetime
 from typing import List, Dict, Optional
 import re
