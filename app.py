@@ -3,8 +3,14 @@ import traceback
 
 class DebugLoggingHandler(logging.Handler):
     def emit(self, record):
-        if "Chrome browser check failed" in record.getMessage():
-            print("\n\n--- LOGGING STACK TRACE ---")
+        message = record.getMessage()
+        if any(phrase in message.lower() for phrase in ["chrome browser check failed", "chrome", "browser check", "install chrome"]):
+            print(f"\n\n--- FOUND CHROME WARNING: {message} ---")
+            print(f"Logger: {record.name}")
+            print(f"Level: {record.levelname}")
+            print(f"Module: {record.module}")
+            print(f"Function: {record.funcName}")
+            print(f"Line: {record.lineno}")
             traceback.print_stack()
             print("--- END TRACE ---\n\n")
 
