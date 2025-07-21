@@ -1,20 +1,30 @@
 import logging
 import traceback
 
-class DebugLoggingHandler(logging.Handler):
-    def emit(self, record):
-        message = record.getMessage()
-        if any(phrase in message.lower() for phrase in ["chrome browser check failed", "chrome", "browser check", "install chrome"]):
-            print(f"\n\n--- FOUND CHROME WARNING: {message} ---")
+class ChromeWarningFilter(logging.Filter):
+    def filter(self, record):
+        msg = record.getMessage().lower()
+        if (
+            "chrome browser check failed" in msg
+            or "chrome" in msg
+            or "browser check" in msg
+            or "install chrome" in msg
+        ):
+            print("\n--- FOUND CHROME WARNING:", record.getMessage(), "---")
             print(f"Logger: {record.name}")
             print(f"Level: {record.levelname}")
             print(f"Module: {record.module}")
             print(f"Function: {record.funcName}")
             print(f"Line: {record.lineno}")
             traceback.print_stack()
-            print("--- END TRACE ---\n\n")
+            print("--- END TRACE ---\n")
+        return True
 
-logging.getLogger().addHandler(DebugLoggingHandler())
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger().addFilter(ChromeWarningFilter())
+
+# TEMP: add a test log to confirm it's working
+logging.warning("Chrome browser check failed: TEST WARNING")
 
 import time
 from datetime import datetime
