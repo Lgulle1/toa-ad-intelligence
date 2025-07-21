@@ -1,83 +1,21 @@
-# ULTIMATE DEBUG - Hook into EVERYTHING
-import sys
-import warnings
-import logging
-import traceback
-import os
-
-print("🚀 ULTIMATE DEBUG: Starting complete system hook...")
-
-# Hook into warnings module
-original_warn = warnings.warn
-def debug_warn(message, category=UserWarning, filename='', lineno=-1, file=None, stacklevel=1):
-    print(f"\n⚠️  WARNINGS MODULE: {message}")
-    traceback.print_stack()
-    print("⚠️  END WARNINGS\n")
-    return original_warn(message, category, filename, lineno, file, stacklevel)
-
-warnings.warn = debug_warn
-
-# Hook into sys.stderr
-original_stderr_write = sys.stderr.write
-def debug_stderr(text):
-    if "chrome" in text.lower() or "browser" in text.lower():
-        print(f"\n💥 STDERR WRITE: {text}")
-        traceback.print_stack()
-        print("💥 END STDERR\n")
-    return original_stderr_write(text)
-
-sys.stderr.write = debug_stderr
-
-# Hook into print function
-original_print = print
-def debug_print(*args, **kwargs):
-    text = ' '.join(str(arg) for arg in args)
-    if "chrome" in text.lower() and "browser" in text.lower():
-        print("📢 PRINT HOOK:", text)
-        traceback.print_stack()
-        print("📢 END PRINT HOOK\n")
-    return original_print(*args, **kwargs)
-
-# Don't override print yet as we need it for our debug output
-
-# Hook ALL logging
-class UltimateLoggingInterceptor:
-    def __init__(self):
-        self.original_handle = logging.Logger.handle
-        self.original_warning = logging.warning
-        self.original_basicConfig = logging.basicConfig
-        
-    def hook_everything(self):
-        def debug_handle(self, record):
-            msg = record.getMessage()
-            if "chrome" in msg.lower() or "browser" in msg.lower():
-                print(f"\n🎯 LOGGER.HANDLE: {msg}")
-                print(f"Logger: {record.name}")
-                print(f"Level: {record.levelname}")
-                traceback.print_stack()
-                print("🎯 END LOGGER.HANDLE\n")
-            return self.original_handle(record)
-            
-        def debug_warning(msg, *args, **kwargs):
-            if "chrome" in str(msg).lower() or "browser" in str(msg).lower():
-                print(f"\n⚡ LOGGING.WARNING: {msg}")
-                traceback.print_stack()
-                print("⚡ END LOGGING.WARNING\n")
-            return self.original_warning(msg, *args, **kwargs)
-        
-        logging.Logger.handle = debug_handle
-        logging.warning = debug_warning
-
-interceptor = UltimateLoggingInterceptor()
-interceptor.hook_everything()
-
-print("🚀 ULTIMATE DEBUG: All hooks installed, importing modules...")
-print("🔍 If the Chrome warning appears without our debug output, it's from subprocess/external source")
-
 from flask import Flask, render_template, request, jsonify, flash
-from scraper import MetaAdScraper
+import logging
 import os
 from dotenv import load_dotenv
+
+# Suppress Chrome warnings by redirecting logging temporarily during import
+import sys
+from io import StringIO
+
+# Capture and filter any Chrome warnings during scraper import
+original_stderr = sys.stderr
+sys.stderr = StringIO()
+
+try:
+    from scraper import MetaAdScraper
+finally:
+    # Restore stderr
+    sys.stderr = original_stderr
 
 # Load environment variables
 load_dotenv()

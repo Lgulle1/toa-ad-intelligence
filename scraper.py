@@ -1,32 +1,5 @@
-import logging
-import traceback
-
-class ChromeWarningFilter(logging.Filter):
-    def filter(self, record):
-        msg = record.getMessage().lower()
-        if (
-            "chrome browser check failed" in msg
-            or "chrome" in msg
-            or "browser check" in msg
-            or "install chrome" in msg
-        ):
-            print("\n--- FOUND CHROME WARNING:", record.getMessage(), "---")
-            print(f"Logger: {record.name}")
-            print(f"Level: {record.levelname}")
-            print(f"Module: {record.module}")
-            print(f"Function: {record.funcName}")
-            print(f"Line: {record.lineno}")
-            traceback.print_stack()
-            print("--- END TRACE ---\n")
-        return True
-
-logging.basicConfig(level=logging.DEBUG)
-logging.getLogger().addFilter(ChromeWarningFilter())
-
-# TEMP: add a test log to confirm it's working
-logging.warning("Chrome browser check failed: TEST WARNING")
-
 import time
+import logging
 from datetime import datetime
 from typing import List, Dict, Optional
 import re
@@ -52,9 +25,10 @@ class MetaAdScraper:
         self.driver: Optional[webdriver.Chrome] = None
     
     def _init_driver(self):
-        """Initialize Selenium Chrome driver"""
+        """Initialize Selenium Chrome driver with automatic Chrome detection"""
         options = Options()
-        options.binary_location = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+        
+        # Configure Chrome options
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
@@ -73,8 +47,37 @@ class MetaAdScraper:
         }
         options.add_experimental_option("prefs", prefs)
         
-        # Initialize Chrome driver with manually set binary path
-        self.driver = webdriver.Chrome(options=options)
+        # Smart Chrome detection and path setting
+        try:
+            # First try: Let Selenium find Chrome automatically
+            self.driver = webdriver.Chrome(options=options)
+        except Exception:
+            # If automatic detection fails, try Windows Chrome path
+            import os
+            windows_chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+            if os.path.exists(windows_chrome_path):
+                options.binary_location = windows_chrome_path
+                self.driver = webdriver.Chrome(options=options)
+            else:
+                # If Windows path doesn't exist, try common alternative paths
+                alternative_paths = [
+                    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+                    r"C:\Users\{}\AppData\Local\Google\Chrome\Application\chrome.exe".format(os.getenv('USERNAME', '')),
+                ]
+                
+                chrome_found = False
+                for path in alternative_paths:
+                    if os.path.exists(path):
+                        options.binary_location = path
+                        try:
+                            self.driver = webdriver.Chrome(options=options)
+                            chrome_found = True
+                            break
+                        except:
+                            continue
+                
+                if not chrome_found:
+                    raise Exception("Chrome browser not found. Please install Google Chrome.")
                 
         # Set timeouts
         self.driver.implicitly_wait(10)
